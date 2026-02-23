@@ -3,8 +3,8 @@
 on:
   workflow_dispatch:
   schedule:
-    # GitHub Actions cron is UTC. This runs at 09:18 / 17:18 / 21:18 JST.
-    - cron: "18 0,8,12 * * *"
+    # Temporary verification schedule (every 5 minutes UTC).
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
