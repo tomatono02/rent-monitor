@@ -1,0 +1,118 @@
+﻿【賃貸物件 新着監視ツール】
+セットアップ方法・実行手順（最新版）
+
+最終更新: 2026-02-23
+
+========================================
+1. ツール概要
+========================================
+
+- 指定した検索URL（SEARCH_URL / SEARCH_URLS）をPlaywrightで取得
+- 一覧から物件IDを抽出して seen_ids.json で新着判定
+- 新着があれば Slack Webhook に通知
+- 新着0件でも通知したい場合は SLACK_NOTIFY_ON_NO_NEW=true
+
+注意:
+- 現在の判定は「検索URL上の新着差分」です
+- 緯度経度・通勤時間の判定は使っていません
+
+
+========================================
+2. ローカルセットアップ（Windows）
+========================================
+
+1) プロジェクト直下へ移動
+   cd C:\Users\tkgng\OneDrive\ドキュメント\rent-monitor
+
+2) 仮想環境を作成
+   python -m venv .venv
+
+3) 仮想環境を有効化
+   PowerShell:
+   .venv\Scripts\Activate.ps1
+
+   cmd:
+   .venv\Scripts\activate.bat
+
+4) 依存ライブラリをインストール
+   pip install -r requirements.txt
+
+5) Playwrightブラウザをインストール
+   python -m playwright install chromium
+
+6) .env を作成
+   cmd:
+   copy .env.example .env
+
+   PowerShell:
+   Copy-Item .env.example .env
+
+7) .env を設定
+   SEARCH_URL=（単一URL）
+   SEARCH_URLS=（複数URL。カンマ区切り or 改行区切り）
+   SLACK_WEBHOOK_URL=
+   SLACK_NOTIFY_ON_NO_NEW=false
+
+補足:
+- SEARCH_URL と SEARCH_URLS はどちらか一方でOK
+- 両方設定した場合は両方のURLを監視
+
+
+========================================
+3. 実行方法
+========================================
+
+手動実行:
+python monitor.py
+
+ログ確認ポイント:
+- サイト取得件数(...)
+- 合計取得件数
+- 新着件数
+- Slack通知を送信しました
+
+新着なしでも通知したい場合:
+- .env の SLACK_NOTIFY_ON_NO_NEW を true にして再実行
+
+
+========================================
+4. よくあるトラブル
+========================================
+
+1) Slack通知が来ない
+- 新着件数が0の可能性
+- SLACK_NOTIFY_ON_NO_NEW=true で動作確認
+- Webhook URLが有効か確認
+
+2) 設定エラーで SEARCH_URL が不足と言われる
+- .env の先頭BOM混入を疑う（UTF-8 BOMなしで保存）
+- キー名の誤字がないか確認
+
+3) git コマンドが使えない
+- Git for Windows をインストール
+- ターミナルを再起動して git --version で確認
+
+
+========================================
+5. 定期実行（ローカルPC）
+========================================
+
+30分ごと実行:
+schtasks /Create /TN "RentMonitor" /SC MINUTE /MO 30 /TR "\"C:\Users\tkgng\OneDrive\ドキュメント\rent-monitor\.venv\Scripts\python.exe\" \"C:\Users\tkgng\OneDrive\ドキュメント\rent-monitor\monitor.py\"" /F
+
+起動時実行:
+schtasks /Create /TN "RentMonitor_OnBoot" /SC ONSTART /TR "\"C:\Users\tkgng\OneDrive\ドキュメント\rent-monitor\.venv\Scripts\python.exe\" \"C:\Users\tkgng\OneDrive\ドキュメント\rent-monitor\monitor.py\"" /RU "%USERNAME%" /F
+
+テスト実行:
+schtasks /Run /TN "RentMonitor"
+schtasks /Run /TN "RentMonitor_OnBoot"
+
+
+========================================
+6. GitHub Actions（無料運用）
+========================================
+
+- 詳細手順は GITHUB_ACTIONS_SETUP.md を参照
+- ワークフロー: .github/workflows/rent-monitor.yml
+- 30分ごと + 手動実行に対応
+

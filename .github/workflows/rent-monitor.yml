@@ -1,0 +1,53 @@
+﻿name: Rent Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rent-monitor
+  cancel-in-progress: false
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Run monitor
+        env:
+          SEARCH_URL: ${{ secrets.SEARCH_URL }}
+          SEARCH_URLS: ${{ secrets.SEARCH_URLS }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_NOTIFY_ON_NO_NEW: ${{ secrets.SLACK_NOTIFY_ON_NO_NEW }}
+        run: python monitor.py
+
+      - name: Commit seen_ids.json
+        run: |
+          if [ -n "$(git status --porcelain seen_ids.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add seen_ids.json
+            git commit -m "chore: update seen_ids.json [skip ci]"
+            git push
+          else
+            echo "No seen_ids.json changes"
+          fi
