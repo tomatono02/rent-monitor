@@ -1,0 +1,15 @@
+name: Heartbeat
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print UTC/JST time
+        run: |
+          echo "UTC: $(date -u '+%Y-%m-%d %H:%M:%S')"
+          echo "JST: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')"
