@@ -3,7 +3,8 @@
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"
+    # GitHub Actions cron is UTC. This runs at 09:00 / 17:00 / 21:00 JST.
+    - cron: "0 0,8,12 * * *"
 
 permissions:
   contents: write
